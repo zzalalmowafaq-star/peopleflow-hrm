@@ -41,7 +41,7 @@ Data is stored locally in the existing R2 emulator under .wrangler/state. Do not
 
 Validation: production build and TypeScript checks passed. Mock-storage tests passed for authentication, permissions, profile privacy, approval updates, attendance hours/overlap, leave duration/overlap, contract overlap, department cycles, stale revisions, audit history and document uploads/downloads. Browser checks covered the app launcher, recruitment pipeline/form and time-off workspace. No sample employee, candidate or payroll records were added to your live workspace.
 
-This is an independently built Odoo-style HR workspace, not full Odoo feature parity. Payroll is manual; reimbursement statuses do not transfer money. Automatic statutory payroll, leave accruals/holiday calendars, electronic signatures, automated hiring conversion, employee self-service and Odoo integrations remain outside this implementation.
+This is an independently built Odoo-style HR workspace, not full Odoo feature parity. Payroll statutory tax covers Uzbekistan only; reimbursement statuses do not transfer money. Other countries' statutory payroll, leave accruals/holiday calendars, electronic signatures, automated hiring conversion, employee self-service and Odoo integrations remain outside this implementation.
 
 
 ## Bulk employee import
@@ -83,3 +83,15 @@ Verified: `node scripts/test-attendance-import.mjs` (file formats, timezones/DST
 **Approvals and balances.** A time-off request can use the days accrued by its first day. Approving it is refused if it would leave a later approved request without enough accrued time. Time Off → Balances shows the days accrued by today and the total by the end of the selected period. Each period needs its own allocation (for example, generate next year's at year end); unused days do not carry over automatically.
 
 Verified: `node scripts/test-leave-accrual.mjs` (monthly/yearly credits, timing, proration, waiting period, maximum, employment dates, plan snapshots, permissions, approvals against accrued days, later-request protection, bulk preview/generation and repeat protection), all 14 test suites, TypeScript and the production build.
+
+## Uzbekistan payroll tax and payslip PDFs — update
+
+**Tax Setup** (Payroll → Tax Setup, payroll approval access with unrestricted scope). One active setup per company, or one for all companies; a company's own setup takes priority. Defaults for Uzbekistan: personal income tax 12%, INPS pension contribution 0.1% paid out of the income tax (so total withholding stays 12%), and employer social tax 12%. Every rate is editable. INPS can be switched to "Withheld in addition". Use a separate setup for employers on other social tax rates, for example 25% for budget organisations or 1% for qualifying employers. Confirm rates with your tax adviser; the defaults were checked against PwC's Uzbekistan tax summary (reviewed 27 August 2026).
+
+**Payslips.** Tick **Apply statutory tax** on a payslip or batch. Income tax and INPS are calculated on gross pay (all earnings, including overtime and allowances) and shown as deduction lines PIT_UZ and INPS_UZ. Social tax (SOCIAL_TAX_UZ) is shown under employer contributions; it does not reduce net pay. Each payslip keeps the rates it was calculated with, so later changes to Tax Setup affect only new drafts. Not included: tax exemptions and benefits (for example material assistance limits), non-cash income, and filing returns.
+
+**Accounting.** Posting a paid payslip also books employer contributions as payroll expense and as a liability in the deduction and payroll tax liability account.
+
+**Payslip PDFs.** Open a payslip and select **Download PDF**, or open a batch and select **Download payslips (PDF)** for one PDF with a page per employee. PDFs are made on this computer and support Latin and Cyrillic text.
+
+Verified: `node scripts/test-payroll-tax.mjs` (tax amounts in both INPS modes, gross basis, company-specific rates, permissions, one active setup per company, rate snapshots, batches, accounting posting and PDFs), all 15 test suites, TypeScript and the production build.

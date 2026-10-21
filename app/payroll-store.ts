@@ -1,0 +1,3 @@
+import {env} from 'cloudflare:workers';
+export async function payrollList(kind:string):Promise<any[]>{const ledger=await env.BUCKET!.get('payroll/ledger.json');if(ledger){const state=await ledger.json<any>();return (state[kind]||[]).map((r:any)=>({...r,revision:ledger.etag}));}const records:any[]=[];let cursor:string|undefined;do{const page=await env.BUCKET!.list({prefix:'payroll/'+kind+'/',cursor});for(const item of page.objects){const object=await env.BUCKET!.get(item.key);if(object)records.push({...await object.json<any>(),revision:object.etag});}cursor=page.truncated?page.cursor:undefined;}while(cursor);return records;}
+

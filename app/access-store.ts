@@ -1,0 +1,5 @@
+import {env} from 'cloudflare:workers';import {scopedEmployees,recordAllowed,companyAllowed,userScope} from './access-policy';
+export async function allEmployees(){const rows:any[]=[];let cursor:string|undefined;do{const page=await env.BUCKET!.list({prefix:'hrm/local_seedy/employee-',cursor});for(const item of page.objects){const o=await env.BUCKET!.get(item.key);if(o)rows.push({...await o.json<any>(),id:item.key.slice('hrm/local_seedy/employee-'.length,-5)});}cursor=page.truncated?page.cursor:undefined;}while(cursor);return rows;}
+export async function requireEmployeeScope(user:any,id:string){const all=await allEmployees();if(!scopedEmployees(user,all).some(e=>e.id===id))throw Error('This employee is outside your access scope.');return all.find(e=>e.id===id);}
+export async function requireRecordScope(user:any,record:any,jobs:any[]=[]){if(!recordAllowed(user,record,await allEmployees(),jobs))throw Error('This record is outside your access scope.');}
+export function requireCompanyScope(user:any,name:string){if(!companyAllowed(user,name))throw Error('This company is outside your access scope.');}
